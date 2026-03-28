@@ -291,6 +291,7 @@
     }
 
     .icon-btn:hover { background: #ebf2dd; }
+  .icon-btn.done:hover { background: #dff3dd; }
     .icon-btn.del:hover { background: #ffe7e0; }
 
     .empty {
@@ -487,7 +488,7 @@
     <section class="agenda-wrap">
       <div class="agenda-head">
         <h2>Appointments</h2>
-        <div class="day-pill" id="selected-day-label">Today</div>
+        <div class="day-pill" id="selected-day-label">All Active</div>
       </div>
 
       <div class="search-wrap">
@@ -561,7 +562,12 @@
 
   <script>
     const STORAGE_KEY = 'appointments_v1';
-    let appointments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    let appointments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+      .map(item => ({
+        ...item,
+        completed: Boolean(item.completed),
+        completedAt: item.completedAt || null
+      }));
     let editingId = null;
     let deletingId = null;
 
@@ -642,7 +648,7 @@
         const isToday = dateKey === toDateKey(new Date());
         const isSelected = dateKey === selectedDate;
         const dotItems = appointments
-          .filter(a => a.date === dateKey)
+          .filter(a => a.date === dateKey && !a.completed)
           .slice(0, 4)
           .map(a => `<span class="dot ${categoryClass(a.category)}"></span>`)
           .join('');
@@ -662,7 +668,7 @@
     function renderAgenda() {
       const q = document.getElementById('search-input').value.trim().toLowerCase();
       const list = appointments
-        .filter(a => a.date === selectedDate)
+        .filter(a => !a.completed)
         .filter(a => {
           if (!q) return true;
           return (
@@ -672,13 +678,17 @@
             (a.category || '').toLowerCase().includes(q)
           );
         })
-        .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+        .sort((a, b) => {
+          const aSort = `${a.date || '9999-99-99'}|${a.time || '99:99'}`;
+          const bSort = `${b.date || '9999-99-99'}|${b.time || '99:99'}`;
+          return aSort.localeCompare(bSort);
+        });
 
-      document.getElementById('selected-day-label').textContent = formatDateLabel(selectedDate);
+      document.getElementById('selected-day-label').textContent = `${list.length} Active`;
 
       const el = document.getElementById('agenda-list');
       if (list.length === 0) {
-        el.innerHTML = '<li class="empty">No appointments for this date yet.</li>';
+        el.innerHTML = '<li class="empty">No active appointments. Completed ones are hidden.</li>';
         return;
       }
 
@@ -686,10 +696,12 @@
         <li class="apt-item">
           <div class="apt-title">${escapeHtml(item.title)}</div>
           <div class="apt-actions">
+            <button class="icon-btn done" onclick="completeAppointment('${item.id}')" title="Mark completed">✅</button>
             <button class="icon-btn" onclick="openEdit('${item.id}')" title="Edit">✏️</button>
             <button class="icon-btn del" onclick="askDelete('${item.id}')" title="Delete">🗑️</button>
           </div>
           <div class="apt-meta">
+            <span>📅 ${formatDateLabel(item.date)}</span>
             <span>🕐 ${formatTime(item.time)}</span>
             ${item.person ? `<span>📍 ${escapeHtml(item.person)}</span>` : ''}
             ${item.category ? `<span>🏷️ ${escapeHtml(item.category)}</span>` : ''}
@@ -771,7 +783,9 @@
         date,
         time: document.getElementById('f-time').value,
         category: document.getElementById('f-category').value,
-        notes: document.getElementById('f-notes').value.trim()
+        notes: document.getElementById('f-notes').value.trim(),
+        completed: editingId ? (appointments.find(a => a.id === editingId)?.completed || false) : false,
+        completedAt: editingId ? (appointments.find(a => a.id === editingId)?.completedAt || null) : null
       };
 
       if (editingId) {
@@ -792,6 +806,14 @@
     function askDelete(id) {
       deletingId = id;
       document.getElementById('confirm-overlay').classList.add('open');
+    }
+
+    function completeAppointment(id) {
+      appointments = appointments.map(item => item.id === id
+        ? { ...item, completed: true, completedAt: new Date().toISOString() }
+        : item);
+      save();
+      renderCalendar();
     }
 
     function closeConfirm() {
