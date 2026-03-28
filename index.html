@@ -636,6 +636,7 @@
     const STORAGE_KEY = 'appointments_v1';
     const CLOUD_TOKEN_KEY = 'appointments_cloud_token';
     const CLOUD_GIST_KEY = 'appointments_cloud_gist';
+    const DEFAULT_CLOUD_GIST_ID = '3af6a97bb08192954630455fabb4817e';
     let appointments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
       .map(item => ({
         ...item,
@@ -643,7 +644,7 @@
         completedAt: item.completedAt || null
       }));
     let cloudToken = localStorage.getItem(CLOUD_TOKEN_KEY) || '';
-    let cloudGistId = localStorage.getItem(CLOUD_GIST_KEY) || '';
+    let cloudGistId = localStorage.getItem(CLOUD_GIST_KEY) || DEFAULT_CLOUD_GIST_ID;
     let cloudAutoSaveTimer = null;
     let editingId = null;
     let deletingId = null;
@@ -716,7 +717,11 @@
     function openCloudModal() {
       document.getElementById('cloud-token').value = cloudToken;
       document.getElementById('cloud-gist-id').value = cloudGistId;
-      setCloudMessage(isCloudReady() ? `Connected to gist ${cloudGistId.slice(0, 8)}...` : 'Not connected yet.');
+      if (cloudToken) {
+        setCloudMessage(isCloudReady() ? `Connected to gist ${cloudGistId.slice(0, 8)}...` : 'Token set. Tap Connect to finish.');
+      } else {
+        setCloudMessage('Paste GitHub token once, then tap Connect.');
+      }
       document.getElementById('cloud-overlay').classList.add('open');
     }
 
@@ -756,7 +761,7 @@
         localStorage.setItem(CLOUD_TOKEN_KEY, cloudToken);
         localStorage.setItem(CLOUD_GIST_KEY, cloudGistId);
         setCloudStatus('Cloud connected');
-        setCloudMessage(`Connected. Gist ID: ${cloudGistId}`);
+        setCloudMessage('Connected. Cloud autosave is now enabled.');
       } catch (err) {
         setCloudMessage(`Connect failed: ${err.message}`);
       }
@@ -1045,7 +1050,7 @@
       }
     });
 
-    setCloudStatus(isCloudReady() ? 'Cloud connected' : 'Local only');
+    setCloudStatus(isCloudReady() ? 'Cloud connected' : 'Cloud ready - connect');
     renderCalendar();
   </script>
 </body>
