@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Joyful Soul Appointment Calendar</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #6b8f5e;
+      --dark: #1e2d18;
+      --mid: #2d4424;
+      --light: #f4efe0;
+      --white: #fffdf7;
+      --accent: #4a7a3a;
+      --text: #2a3520;
+      --danger: #b63e2e;
+      --line: #c8d8b8;
+      --shadow: 0 4px 20px rgba(30, 45, 24, 0.15);
+      --radius: 12px;
+    }
+
+    body {
+      font-family: Georgia, serif;
+      background: linear-gradient(180deg, #f0ead7 0%, var(--light) 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+      color: var(--white);
+      padding: 1rem 1.1rem 1.2rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 3px solid var(--gold);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      font-family: Pacifico, cursive;
+      color: #d5e0b9;
+      font-size: 1.25rem;
+      line-height: 1.1;
+    }
+
+    .sub-brand {
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      opacity: 0.9;
+      margin-top: 0.2rem;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.95rem;
+      gap: 0.8rem;
+    }
+
+    .month-title {
+      font-size: 1.35rem;
+      color: #dbe9be;
+      font-weight: 700;
+    }
+
+    .month-controls {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .ctrl-btn {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--white);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 1rem 0.8rem 5rem;
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    .calendar-wrap,
+    .agenda-wrap {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .weekday-grid,
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .weekday-grid div {
+      text-align: center;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.55rem 0.25rem;
+      font-weight: 700;
+      color: var(--mid);
+      border-bottom: 1px solid var(--line);
+      background: #eef3df;
+    }
+
+    .day-cell {
+      min-height: 76px;
+      border-right: 1px solid #e6edd6;
+      border-bottom: 1px solid #e6edd6;
+      padding: 0.4rem;
+      cursor: pointer;
+      position: relative;
+      background: #fffefb;
+    }
+
+    .day-cell:nth-child(7n) { border-right: none; }
+
+    .day-cell.other-month {
+      background: #f6f6f1;
+      color: #97a291;
+    }
+
+    .day-cell.selected {
+      outline: 2px solid var(--gold);
+      outline-offset: -2px;
+      background: #f4f9eb;
+    }
+
+    .day-cell.today .day-number {
+      background: var(--accent);
+      color: var(--white);
+      border-radius: 999px;
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-number {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 0.35rem;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--gold);
+    }
+
+    .dot.medical { background: #7b4f94; }
+    .dot.business { background: #2b6f9c; }
+    .dot.personal { background: #c26342; }
+    .dot.dental { background: #2b8c7e; }
+
+    .agenda-head {
+      background: var(--mid);
+      color: var(--white);
+      padding: 0.85rem 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .agenda-head h2 {
+      font-size: 1rem;
+      color: #d5e0b9;
+    }
+
+    .day-pill {
+      font-size: 0.78rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .search-wrap {
+      padding: 0.8rem 0.95rem;
+      border-bottom: 1px solid var(--line);
+      background: #fbfbf7;
+      position: relative;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      border: 1px solid #cbd8b8;
+      border-radius: 9px;
+      padding: 0.62rem 0.75rem 0.62rem 2.2rem;
+      font-size: 0.92rem;
+      background: white;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .search-wrap span {
+      position: absolute;
+      left: 1.7rem;
+      top: 1.45rem;
+      color: #7f8971;
+      font-size: 0.95rem;
+      pointer-events: none;
+    }
+
+    .agenda-list {
+      list-style: none;
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 0.35rem;
+    }
+
+    .apt-item {
+      border: 1px solid #d8e3c7;
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      background: #fffffc;
+      margin: 0.45rem;
+      padding: 0.62rem 0.7rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.25rem 0.4rem;
+    }
+
+    .apt-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: var(--dark);
+    }
+
+    .apt-meta {
+      grid-column: 1;
+      color: #53634a;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.7rem;
+    }
+
+    .apt-notes {
+      grid-column: 1 / -1;
+      margin-top: 0.3rem;
+      padding: 0.4rem 0.55rem;
+      border-radius: 8px;
+      background: #f4f8ea;
+      font-size: 0.82rem;
+      color: #4f5c46;
+      white-space: pre-wrap;
+    }
+
+    .apt-actions {
+      display: flex;
+      gap: 0.2rem;
+    }
+
+    .icon-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      font-size: 0.95rem;
+    }
+
+    .icon-btn:hover { background: #ebf2dd; }
+    .icon-btn.del:hover { background: #ffe7e0; }
+
+    .empty {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #687460;
+      font-size: 0.9rem;
+    }
+
+    .fab {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      width: 58px;
+      height: 58px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      box-shadow: 0 10px 22px rgba(45, 68, 36, 0.35);
+      font-size: 1.8rem;
+      cursor: pointer;
+      z-index: 30;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 45, 24, 0.55);
+      z-index: 40;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .overlay.open { display: flex; }
+
+    .modal {
+      width: 100%;
+      max-width: 620px;
+      background: var(--white);
+      border-radius: 14px 14px 0 0;
+      border: 1px solid var(--line);
+      padding: 1rem 1rem 1.3rem;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.85rem;
+    }
+
+    .modal-head h3 {
+      color: var(--dark);
+      font-size: 1.1rem;
+    }
+
+    .close {
+      border: 1px solid #d3debf;
+      background: #f7f8f1;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--dark);
+    }
+
+    .fields { display: grid; gap: 0.75rem; }
+
+    label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #56624d;
+      display: block;
+      margin-bottom: 0.28rem;
+      font-weight: 700;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cfdbc0;
+      border-radius: 9px;
+      background: #fffeff;
+      padding: 0.62rem 0.7rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+    textarea { min-height: 82px; resize: vertical; }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .save-btn {
+      border: none;
+      margin-top: 0.35rem;
+      border-radius: 9px;
+      padding: 0.74rem;
+      background: var(--gold);
+      color: var(--white);
+      font-size: 0.97rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(30, 45, 24, 0.6);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .confirm-overlay.open { display: flex; }
+
+    .confirm-box {
+      width: 100%;
+      max-width: 320px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--white);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .confirm-box h4 { color: var(--dark); margin-bottom: 0.35rem; }
+    .confirm-box p  { color: #56624d; font-size: 0.9rem; margin-bottom: 0.85rem; }
+
+    .confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    .cancel-btn,
+    .delete-btn {
+      border-radius: 8px;
+      padding: 0.65rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+    }
+
+    .cancel-btn { background: #edf2e2; color: var(--dark); }
+    .delete-btn { background: var(--danger); color: var(--white); }
+
+    @media (min-width: 820px) {
+      main {
+        grid-template-columns: 1.15fr 0.85fr;
+        align-items: start;
+      }
+
+      .agenda-wrap { position: sticky; top: 104px; }
+      .overlay { align-items: center; }
+      .modal { border-radius: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Joyful Soul Creations</div>
+    <div class="sub-brand">Appointment Calendar</div>
+    <div class="header-row">
+      <div class="month-title" id="month-title"></div>
+      <div class="month-controls">
+        <button class="ctrl-btn" onclick="changeMonth(-1)" title="Previous month">◀</button>
+        <button class="ctrl-btn" onclick="goToToday()" title="Current month">●</button>
+        <button class="ctrl-btn" onclick="changeMonth(1)" title="Next month">▶</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="calendar-wrap">
+      <div class="weekday-grid">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div class="days-grid" id="days-grid"></div>
+    </section>
+
+    <section class="agenda-wrap">
+      <div class="agenda-head">
+        <h2>Appointments</h2>
+        <div class="day-pill" id="selected-day-label">Today</div>
+      </div>
+
+      <div class="search-wrap">
+        <span>🔎</span>
+        <input id="search-input" type="text" placeholder="Search title, notes, location..." oninput="renderAgenda()" />
+      </div>
+
+      <ul class="agenda-list" id="agenda-list"></ul>
+    </section>
+  </main>
+
+  <button class="fab" onclick="openModal()" title="New appointment">+</button>
+
+  <div class="overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modal-title">New Appointment</h3>
+        <button class="close" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="fields">
+        <div>
+          <label for="f-title">Title *</label>
+          <input id="f-title" type="text" maxlength="80" placeholder="Wedding planning call" />
+        </div>
+        <div>
+          <label for="f-person">With / Location</label>
+          <input id="f-person" type="text" maxlength="120" placeholder="Client meeting at Downtown Cafe" />
+        </div>
+        <div class="row-2">
+          <div>
+            <label for="f-date">Date *</label>
+            <input id="f-date" type="date" />
+          </div>
+          <div>
+            <label for="f-time">Time</label>
+            <input id="f-time" type="time" />
+          </div>
+        </div>
+        <div>
+          <label for="f-category">Category</label>
+          <select id="f-category">
+            <option value="General">General</option>
+            <option value="Medical">Medical</option>
+            <option value="Dental">Dental</option>
+            <option value="Business">Business</option>
+            <option value="Personal">Personal</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-notes">Notes</label>
+          <textarea id="f-notes" placeholder="Extra details..."></textarea>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="saveAppointment()">Save Appointment</button>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+      <h4>Delete Appointment?</h4>
+      <p>This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="cancel-btn" onclick="closeConfirm()">Cancel</button>
+        <button class="delete-btn" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'appointments_v1';
+    let appointments = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    let editingId = null;
+    let deletingId = null;
+
+    const now = new Date();
+    let viewYear = now.getFullYear();
+    let viewMonth = now.getMonth();
+    let selectedDate = toDateKey(now);
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
+    }
+
+    function toDateKey(dateObj) {
+      return dateObj.toISOString().slice(0, 10);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function categoryClass(category) {
+      const c = (category || '').toLowerCase();
+      if (['medical', 'business', 'personal', 'dental'].includes(c)) return c;
+      return '';
+    }
+
+    function formatDateLabel(dateStr) {
+      const date = new Date(dateStr + 'T00:00:00');
+      return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return 'Any time';
+      const [h, m] = timeStr.split(':');
+      const hour = Number(h);
+      return `${hour % 12 || 12}:${m} ${hour < 12 ? 'AM' : 'PM'}`;
+    }
+
+    function renderCalendar() {
+      const first = new Date(viewYear, viewMonth, 1);
+      const startDay = first.getDay();
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+      const monthName = first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      document.getElementById('month-title').textContent = monthName;
+
+      const grid = document.getElementById('days-grid');
+      let html = '';
+
+      const cells = 42;
+      for (let i = 0; i < cells; i++) {
+        let y = viewYear;
+        let m = viewMonth;
+        let day;
+        let otherMonth = false;
+
+        if (i < startDay) {
+          day = daysInPrevMonth - startDay + i + 1;
+          m = viewMonth - 1;
+          if (m < 0) { m = 11; y -= 1; }
+          otherMonth = true;
+        } else if (i >= startDay + daysInMonth) {
+          day = i - (startDay + daysInMonth) + 1;
+          m = viewMonth + 1;
+          if (m > 11) { m = 0; y += 1; }
+          otherMonth = true;
+        } else {
+          day = i - startDay + 1;
+        }
+
+        const dateObj = new Date(y, m, day);
+        const dateKey = toDateKey(dateObj);
+        const isToday = dateKey === toDateKey(new Date());
+        const isSelected = dateKey === selectedDate;
+        const dotItems = appointments
+          .filter(a => a.date === dateKey)
+          .slice(0, 4)
+          .map(a => `<span class="dot ${categoryClass(a.category)}"></span>`)
+          .join('');
+
+        html += `
+          <div class="day-cell ${otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}"
+               onclick="selectDate('${dateKey}', ${otherMonth ? 1 : 0})">
+            <div class="day-number">${day}</div>
+            <div class="dots">${dotItems}</div>
+          </div>`;
+      }
+
+      grid.innerHTML = html;
+      renderAgenda();
+    }
+
+    function renderAgenda() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      const list = appointments
+        .filter(a => a.date === selectedDate)
+        .filter(a => {
+          if (!q) return true;
+          return (
+            a.title.toLowerCase().includes(q) ||
+            (a.person || '').toLowerCase().includes(q) ||
+            (a.notes || '').toLowerCase().includes(q) ||
+            (a.category || '').toLowerCase().includes(q)
+          );
+        })
+        .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+
+      document.getElementById('selected-day-label').textContent = formatDateLabel(selectedDate);
+
+      const el = document.getElementById('agenda-list');
+      if (list.length === 0) {
+        el.innerHTML = '<li class="empty">No appointments for this date yet.</li>';
+        return;
+      }
+
+      el.innerHTML = list.map(item => `
+        <li class="apt-item">
+          <div class="apt-title">${escapeHtml(item.title)}</div>
+          <div class="apt-actions">
+            <button class="icon-btn" onclick="openEdit('${item.id}')" title="Edit">✏️</button>
+            <button class="icon-btn del" onclick="askDelete('${item.id}')" title="Delete">🗑️</button>
+          </div>
+          <div class="apt-meta">
+            <span>🕐 ${formatTime(item.time)}</span>
+            ${item.person ? `<span>📍 ${escapeHtml(item.person)}</span>` : ''}
+            ${item.category ? `<span>🏷️ ${escapeHtml(item.category)}</span>` : ''}
+          </div>
+          ${item.notes ? `<div class="apt-notes">${escapeHtml(item.notes)}</div>` : ''}
+        </li>
+      `).join('');
+    }
+
+    function selectDate(dateKey, jumpMonth) {
+      selectedDate = dateKey;
+      if (jumpMonth) {
+        const d = new Date(dateKey + 'T00:00:00');
+        viewYear = d.getFullYear();
+        viewMonth = d.getMonth();
+      }
+      renderCalendar();
+    }
+
+    function changeMonth(delta) {
+      viewMonth += delta;
+      if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
+      if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
+      renderCalendar();
+    }
+
+    function goToToday() {
+      const d = new Date();
+      viewYear = d.getFullYear();
+      viewMonth = d.getMonth();
+      selectedDate = toDateKey(d);
+      renderCalendar();
+    }
+
+    function openModal() {
+      editingId = null;
+      document.getElementById('modal-title').textContent = 'New Appointment';
+      document.getElementById('f-title').value = '';
+      document.getElementById('f-person').value = '';
+      document.getElementById('f-date').value = selectedDate;
+      document.getElementById('f-time').value = '';
+      document.getElementById('f-category').value = 'General';
+      document.getElementById('f-notes').value = '';
+      document.getElementById('modal-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('f-title').focus(), 120);
+    }
+
+    function openEdit(id) {
+      const item = appointments.find(a => a.id === id);
+      if (!item) return;
+      editingId = id;
+      document.getElementById('modal-title').textContent = 'Edit Appointment';
+      document.getElementById('f-title').value = item.title;
+      document.getElementById('f-person').value = item.person || '';
+      document.getElementById('f-date').value = item.date || selectedDate;
+      document.getElementById('f-time').value = item.time || '';
+      document.getElementById('f-category').value = item.category || 'General';
+      document.getElementById('f-notes').value = item.notes || '';
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function handleOverlayClick(event) {
+      if (event.target === document.getElementById('modal-overlay')) closeModal();
+    }
+
+    function saveAppointment() {
+      const title = document.getElementById('f-title').value.trim();
+      const date = document.getElementById('f-date').value;
+      if (!title || !date) return;
+
+      const data = {
+        id: editingId || Date.now().toString(36) + Math.random().toString(36).slice(2),
+        title,
+        person: document.getElementById('f-person').value.trim(),
+        date,
+        time: document.getElementById('f-time').value,
+        category: document.getElementById('f-category').value,
+        notes: document.getElementById('f-notes').value.trim()
+      };
+
+      if (editingId) {
+        appointments = appointments.map(a => a.id === editingId ? data : a);
+      } else {
+        appointments.push(data);
+      }
+
+      selectedDate = date;
+      const d = new Date(date + 'T00:00:00');
+      viewYear = d.getFullYear();
+      viewMonth = d.getMonth();
+      save();
+      closeModal();
+      renderCalendar();
+    }
+
+    function askDelete(id) {
+      deletingId = id;
+      document.getElementById('confirm-overlay').classList.add('open');
+    }
+
+    function closeConfirm() {
+      deletingId = null;
+      document.getElementById('confirm-overlay').classList.remove('open');
+    }
+
+    function confirmDelete() {
+      appointments = appointments.filter(a => a.id !== deletingId);
+      save();
+      closeConfirm();
+      renderCalendar();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeConfirm();
+      }
+    });
+
+    renderCalendar();
+  </script>
+</body>
+</html>
